@@ -6,8 +6,8 @@
 // @author       https://github.com/RadianttK
 // @match        https://anilist.co/anime/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=anilist.co
-// @grant        GM_getValue
-// @grant        GM_setValue
+// @grant        GM.getValue
+// @grant        GM.setValue
 // ==/UserScript==
 
 (function() {
@@ -24,12 +24,12 @@
     async function promptAPIKey() {
         var apiKey = prompt("Please enter your Jimaku API key:");
         if (apiKey !== null && apiKey !== "") {
-            await GM_setValue("API_KEY_JIMAKU", apiKey);
+            await GM.setValue("API_KEY_JIMAKU", apiKey);
         }
     }
 
     async function getAPIKey() {
-        let apiKey = await GM_getValue("API_KEY_JIMAKU");
+        let apiKey = await GM.getValue("API_KEY_JIMAKU");
         if (!apiKey) {
             await promptAPIKey();
             apiKey = await getAPIKey();
@@ -45,13 +45,11 @@
 
             const jimakuButtons = document.querySelectorAll('.jimaku-button');
             if (jimakuButtons.length > 1) {
-                console.log("Removing old Jimaku button")
                 jimakuButtons[1].parentNode.removeChild(jimakuButtons[1]);
             }
 
             const newPageUrl = window.location.href;
             if (newPageUrl !== currentPageUrl) {
-                console.log("Updating Jimaku button")
                 setupVariables();
                 addJimakuButton();
             }
@@ -63,7 +61,7 @@
     };
 
     async function fetchJimakuId(anilistId) {
-        const cachedJimakuId = await GM_getValue('jimakuId_' + anilistId);
+        const cachedJimakuId = await GM.getValue('jimakuId_' + anilistId);
         return cachedJimakuId ? cachedJimakuId : await fetchJimakuIdFromAPI(anilistId);
     }
 
@@ -74,7 +72,7 @@
         
         if (response.ok && data[0]) {
             const id = data[0].id;
-            await GM_setValue('jimakuId_' + anilistId, id);
+            await GM.setValue('jimakuId_' + anilistId, id);
             return id;
         }
         if (!data[0]) {
@@ -82,7 +80,7 @@
         }
         console.error('Error fetching data from Jimaku API:', data.error);
         if (response.status === 401) {
-            await GM_setValue("API_KEY_JIMAKU", null);
+            await GM.setValue("API_KEY_JIMAKU", null);
             console.log("Invalid Jimaku API key supplied.")
             alert("Error: Invalid Jimaku API key.");
         }
