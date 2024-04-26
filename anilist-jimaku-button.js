@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList Jimaku Button
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Adds a button to individual anime pages on AniList that links to the corresponding Jimaku entry
 // @author       https://github.com/RadianttK
 // @match        https://anilist.co/anime/*
@@ -16,8 +16,8 @@
     let currentPageUrl, anilistId, JIMAKU_API_KEY;
 
     async function setupVariables() {
-        currentPageUrl = window.location.href
-        const anilistIdRegexMatch = currentPageUrl.match(/https:\/\/anilist\.co\/anime\/(\d+)\//);
+        currentPageUrl = window.location.href;
+        const anilistIdRegexMatch = currentPageUrl.match(/^https:\/\/anilist\.co\/anime\/(\d+)(\/.*)?$/);
         anilistId = anilistIdRegexMatch ? anilistIdRegexMatch[1] : null;
     }
 
