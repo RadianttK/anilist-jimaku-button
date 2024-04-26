@@ -1,7 +1,7 @@
 # anilist-jimaku-button
 
-This script adds a button to AniList anime pages, linking straight to the corresponding Jimaku entry.
-- The ID for the Jimaku entry is retrieved using the Jimaku API, so a Jimaku API key is required to use the script.
+This script adds a button to [AniList](https://anilist.co/) anime pages, linking straight to the corresponding [Jimaku](https://jimaku.cc/) entry.
+- Note: The ID for the Jimaku entry is retrieved using the Jimaku API, so a Jimaku API key is required to use the script.
 
 ### Instructions
 
