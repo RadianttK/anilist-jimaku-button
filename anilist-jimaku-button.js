@@ -1,28 +1,28 @@
 // ==UserScript==
 // @name         AniList Jimaku Button
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Adds a button to individual anime pages on AniList that links to the corresponding Jimaku entry
 // @author       https://github.com/RadianttK
 // @match        https://anilist.co/anime/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=anilist.co
 // @grant        GM.getValue
 // @grant        GM.setValue
+// @run-at       document-start
 // ==/UserScript==
 
 (function() {
 'use strict';
-    let currentPageUrl, urlArr, anilistId, anilistIdLong, JIMAKU_API_KEY;
+    let currentPageUrl, anilistId, JIMAKU_API_KEY;
 
-    function setupVariables() {
-        currentPageUrl = window.location.href;
-        urlArr = currentPageUrl.split('/');
-        anilistId = urlArr[4];
-        anilistIdLong = urlArr.length > 6 ? `${urlArr[4]}/${urlArr[5]}` : urlArr[4];
+    async function setupVariables() {
+        currentPageUrl = window.location.href
+        const anilistIdRegexMatch = currentPageUrl.match(/https:\/\/anilist\.co\/anime\/(\d+)\//);
+        anilistId = anilistIdRegexMatch ? anilistIdRegexMatch[1] : null;
     }
 
     async function promptAPIKey() {
-        var apiKey = prompt("Please enter your Jimaku API key:");
+        const apiKey = prompt("Please enter your Jimaku API key:");
         if (apiKey !== null && apiKey !== "") {
             await GM.setValue("API_KEY_JIMAKU", apiKey);
         }
@@ -37,28 +37,31 @@
         return apiKey;
     }
 
-    window.onload = function() {
-        const observer = new MutationObserver(function(mutations) {
-            if (!document.querySelector('.jimaku-button')) {
-                addJimakuButton();
-            }
+    document.addEventListener('DOMContentLoaded', function() {
+        const pageLoadObserver = new MutationObserver(async function() {
+            const socialButton = document.querySelector('.nav > a[href*="/social"]');
+            if(!socialButton) return;
 
-            const jimakuButtons = document.querySelectorAll('.jimaku-button');
-            if (jimakuButtons.length > 1) {
-                jimakuButtons[1].parentNode.removeChild(jimakuButtons[1]);
-            }
+            pageLoadObserver.disconnect();
+            JIMAKU_API_KEY = await getAPIKey();
+            await setupVariables();
+            await addJimakuButton(socialButton);
+        });
+        const pageNavigationObserver = new MutationObserver(async function() {
+            if (window.location.href === currentPageUrl) return;
 
-            const newPageUrl = window.location.href;
-            if (newPageUrl !== currentPageUrl) {
-                setupVariables();
-                addJimakuButton();
-            }
+            const jimakuButton = document.getElementById('jimaku-button');
+            if (!jimakuButton) return;
+
+            await setupVariables();
+            await updateJimakuButton(jimakuButton);
         });
 
-        setupVariables();
-        const config = { childList: true, subtree: true };
-        observer.observe(document.body, config);
-    };
+        const observerConfig = { childList: true, subtree: true };
+        pageLoadObserver.observe(document.body, observerConfig);
+        pageNavigationObserver.observe(document.body, observerConfig);
+    });
+
 
     async function fetchJimakuId(anilistId) {
         const cachedJimakuId = await GM.getValue('jimakuId_' + anilistId);
@@ -66,8 +69,7 @@
     }
 
     async function fetchJimakuIdFromAPI(anilistId) {
-        const JIMAKU_API_URL = "https://jimaku.cc/api/entries/search?anilist_id=%s";
-        const response = await fetch(JIMAKU_API_URL.replace('%s', anilistId), { headers: { 'authorization': JIMAKU_API_KEY } });
+        const response = await fetch(`https://jimaku.cc/api/entries/search?anilist_id=${anilistId}`, { headers: { 'authorization': JIMAKU_API_KEY } });
         const data = await response.json();
         
         if (response.ok && data[0]) {
@@ -87,44 +89,29 @@
         return "..";
     }
 
-    async function addJimakuButton() {
-        JIMAKU_API_KEY = await getAPIKey();
+    async function addJimakuButton(socialButton) {
+        const jimakuButton = createJimakuButton(socialButton);
+        jimakuButton.href = "https://jimaku.cc/";
+        socialButton.parentNode.insertBefore(jimakuButton, socialButton.nextSibling);
+        updateJimakuButton(jimakuButton);
+    }
 
-        const socialButtonShort = document.querySelector('.nav > a[href="/anime/' + anilistId + '/social"]');
-        const socialButtonLong = document.querySelector('.nav > a[href="/anime/' + anilistIdLong + '/social"]');
-        const socialButton = socialButtonShort ? socialButtonShort : socialButtonLong;
-
-        if (socialButton) {
-            const jimakuButton = createJimakuButton();
-            jimakuButton.href = "https://jimaku.cc/";
-            socialButton.parentNode.insertBefore(jimakuButton, socialButton.nextSibling);
-
-            try {
-                const id = await fetchJimakuId(anilistId);
-                updateButtonHref(jimakuButton, id);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
+    async function updateJimakuButton(jimakuButton) {
+        try {
+            const id = await fetchJimakuId(anilistId);
+            jimakuButton.href = `https://jimaku.cc/entry/${id}`;
+        } catch (error) {
+            console.error('Error fetching data:', error);
         }
     }
 
-    function createJimakuButton() {
+    function createJimakuButton(socialButton) {
         const jimakuButton = document.createElement('a');
         jimakuButton.innerText = 'Jimaku';
-        jimakuButton.classList.add('link', 'jimaku-button');
-        jimakuButton.setAttribute('data-v-5776f768', '');
-        return jimakuButton;
-    }
-
-    function updateButtonHref(button, id) {
-        const jimakuEntry = `https://jimaku.cc/entry/${id}`;
-        button.href = jimakuEntry;
-    }
-    
-    function removeJimakuButton() {
-        const jimakuButton = document.querySelector('.jimaku-button');
-        if (jimakuButton) {
-            jimakuButton.remove();
+        jimakuButton.setAttribute('id', 'jimaku-button');
+        for (const { name, value } of socialButton.attributes) {
+            jimakuButton.setAttribute(name, value);
         }
+        return jimakuButton;
     }
 })();
