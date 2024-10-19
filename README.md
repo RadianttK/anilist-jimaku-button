@@ -12,3 +12,8 @@ This script adds a button to [AniList](https://anilist.co/) anime pages, linking
     - You can generate an API key from your profile page on [Jimaku](https://jimaku.cc/) after creating an account.
 4. Once the API key is entered, the Jimaku button will appear on the page.
     - Note: if Jimaku does not have an entry corresponding to the AniList ID for that page, the button will link to the Jimaku homepage instead. 
+
+---
+
+![image](https://github.com/user-attachments/assets/749e1705-8278-487f-b50d-af6f0657ce19)
+
