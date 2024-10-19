@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList Jimaku Button
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Adds a button to individual anime pages on AniList that links to the corresponding Jimaku entry
 // @author       https://github.com/RadianttK
 // @match        https://anilist.co/anime/*
@@ -39,13 +39,13 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const pageLoadObserver = new MutationObserver(async function() {
-            const socialButton = document.querySelector('.nav > a[href*="/social"]');
-            if(!socialButton) return;
+            const overviewButton = document.querySelector('.nav > a.router-link-exact-active');
+            if(!overviewButton) return;
 
             pageLoadObserver.disconnect();
             JIMAKU_API_KEY = await getAPIKey();
             await setupVariables();
-            await addJimakuButton(socialButton);
+            await addJimakuButton(overviewButton);
         });
         const pageNavigationObserver = new MutationObserver(async function() {
             if (window.location.href === currentPageUrl) return;
@@ -71,7 +71,7 @@
     async function fetchJimakuIdFromAPI(anilistId) {
         const response = await fetch(`https://jimaku.cc/api/entries/search?anilist_id=${anilistId}`, { headers: { 'authorization': JIMAKU_API_KEY } });
         const data = await response.json();
-        
+
         if (response.ok && data[0]) {
             const id = data[0].id;
             await GM.setValue('jimakuId_' + anilistId, id);
@@ -89,10 +89,10 @@
         return "..";
     }
 
-    async function addJimakuButton(socialButton) {
-        const jimakuButton = createJimakuButton(socialButton);
+    async function addJimakuButton(overviewButton) {
+        const jimakuButton = createJimakuButton(overviewButton);
         jimakuButton.href = "https://jimaku.cc/";
-        socialButton.parentNode.insertBefore(jimakuButton, socialButton.nextSibling);
+        overviewButton.parentNode.insertBefore(jimakuButton, overviewButton.nextSibling);
         updateJimakuButton(jimakuButton);
     }
 
@@ -105,11 +105,11 @@
         }
     }
 
-    function createJimakuButton(socialButton) {
+    function createJimakuButton(overviewButton) {
         const jimakuButton = document.createElement('a');
         jimakuButton.innerText = 'Jimaku';
         jimakuButton.setAttribute('id', 'jimaku-button');
-        for (const { name, value } of socialButton.attributes) {
+        for (const { name, value } of overviewButton.attributes) {
             jimakuButton.setAttribute(name, value);
         }
         return jimakuButton;
