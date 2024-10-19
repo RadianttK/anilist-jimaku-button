@@ -15,5 +15,4 @@ This script adds a button to [AniList](https://anilist.co/) anime pages, linking
 
 ---
 
-![image](https://github.com/user-attachments/assets/749e1705-8278-487f-b50d-af6f0657ce19)
-
+![image](https://github.com/user-attachments/assets/757f3ab7-9f84-4baf-a883-db0567f7c55b)
