@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList Jimaku Button
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Adds a button to individual anime pages on AniList that links to the corresponding Jimaku entry
 // @author       https://github.com/RadianttK
 // @match        https://anilist.co/*
@@ -39,11 +39,15 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const pageLoadObserver = new MutationObserver(async function() {
-            if (!window.location.href.startsWith('https://anilist.co/anime')) return;
+            if (!window.location.href.startsWith('https://anilist.co/anime')) {
+                document.getElementById('jimaku-button').remove();
+                return;
+            }
             const overviewButton = document.querySelector('.nav > a.router-link-exact-active');
             if(!overviewButton) return;
 
             pageLoadObserver.disconnect();
+
             if (document.getElementById('jimaku-button')) return;
 
             JIMAKU_API_KEY = await getAPIKey();
@@ -51,8 +55,11 @@
             await addJimakuButton(overviewButton);
         });
         const pageNavigationObserver = new MutationObserver(async function() {
-            if (!window.location.href.startsWith('https://anilist.co/anime')) return;
             if (window.location.href === currentPageUrl) return;
+            if (!window.location.href.startsWith('https://anilist.co/anime')) {
+                document.getElementById('jimaku-button').remove();
+                return;
+            }
 
             const jimakuButton = document.getElementById('jimaku-button');
             if (!jimakuButton) return;
