@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AniList Jimaku Button
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Adds a button to individual anime pages on AniList that links to the corresponding Jimaku entry
 // @author       https://github.com/RadianttK
 // @match        https://anilist.co/*
@@ -44,6 +44,8 @@
             if(!overviewButton) return;
 
             pageLoadObserver.disconnect();
+            if (document.getElementById('jimaku-button')) return;
+
             JIMAKU_API_KEY = await getAPIKey();
             await setupVariables();
             await addJimakuButton(overviewButton);
